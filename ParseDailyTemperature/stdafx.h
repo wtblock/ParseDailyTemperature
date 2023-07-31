@@ -1,9 +1,8 @@
-// stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
-//
-
+/////////////////////////////////////////////////////////////////////////////
+// Copyright © 2023 by W. T. Block, all rights reserved
+/////////////////////////////////////////////////////////////////////////////
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "targetver.h"
 
@@ -16,6 +15,7 @@
 #define VC_EXTRALEAN            // Exclude rarely-used stuff from Windows headers
 #endif
 
+#pragma warning( disable :4996 ) 
 #include <afx.h>
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
