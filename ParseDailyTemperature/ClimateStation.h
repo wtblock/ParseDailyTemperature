@@ -439,7 +439,7 @@ public:
 	}
 
 	// destructor
-	~CClimateStation()
+	virtual ~CClimateStation()
 	{
 	}
 };

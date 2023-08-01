@@ -11,12 +11,64 @@
 
 
 // The one and only application object
-
 CWinApp theApp;
 
 using namespace std;
 
 /////////////////////////////////////////////////////////////////////////////
+// read the stations text file and index it by the station 6 digit station 
+// code
+bool ReadTemperatures()
+{
+	// open the temperature text file
+	CStdioFile file;
+	const bool value =
+		FALSE != file.Open
+		(
+			m_csPath, CFile::modeRead | CFile::shareDenyNone
+		);
+
+	// if the open was successful, read each line of the file and 
+	// collect the temperature data properties
+	if ( value == true )
+	{
+		bool bMinimum = false;
+		CString csLine;
+		while ( file.ReadString( csLine ) )
+		{
+			const CString csElement = csLine.Mid( 12, 4 );
+			if ( csElement == _T( "TMIN" ) )
+			{
+				bMinimum = true;
+			}
+			else if ( csElement == _T( "TMAX" ) )
+			{
+				bMinimum = false;
+			}
+			else
+			{
+				continue;
+			}
+
+			CKeyedCollection<CString, CTemperatureMonth>& target =
+				bMinimum ? m_Minimums : m_Maximums;
+
+			shared_ptr<CTemperatureMonth> pTemp =
+				shared_ptr<CTemperatureMonth>
+				( 
+					new CTemperatureMonth( csLine ) 
+				);
+			const CString csKey = pTemp->Key;
+			target.add( csKey, pTemp );
+		}
+	}
+
+	return value;
+} // ReadTemperatures
+
+/////////////////////////////////////////////////////////////////////////////
+// read the stations text file and index it by the station 6 digit station 
+// code
 bool ReadStations()
 {
 	// open the stations text file
@@ -45,6 +97,8 @@ bool ReadStations()
 } // ReadStations
 
 /////////////////////////////////////////////////////////////////////////////
+// read the state data and make a cross reference between the two digit code
+// and the two letter postal code that is used to identify states
 bool ReadStates()
 {
 	bool value = false;
@@ -233,7 +287,7 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 	// retrieve the pathname from the command line
 	m_csPath = arrArgs[ 1 ];
 
-	// existance of input file
+	// existence of input file
 	bool bExists = false;
 
 	// if it is not a period, test for existence of the given folder name
@@ -291,7 +345,7 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 	{
 		ReadStates();
 		ReadStations();
-		
+		ReadTemperatures();
 	}
 
 	// all is good

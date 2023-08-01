@@ -6,6 +6,7 @@
 
 class CState
 {
+// protected data
 protected:
 	// two digit state number
 	CString m_csCode;
@@ -16,7 +17,7 @@ protected:
 	// name
 	CString m_csName;
 
-	// public properties
+// public properties
 public:
 	// two letter postal name
 	inline CString GetPostal()
@@ -66,8 +67,22 @@ public:
 	__declspec( property( get = GetName, put = SetName ) )
 		CString Name;
 
+// protected methods
+protected:
+
+// public methods
+public:
+
+// protected virtuals
+protected:
+
+// publich virtuals
+public:
+
+// public constructor/destructor
 public:
 	CState();
 	virtual ~CState();
+
 };
 

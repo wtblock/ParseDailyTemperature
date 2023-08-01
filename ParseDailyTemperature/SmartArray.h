@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2022 by W. T. Block, All Rights Reserved
+// Copyright (c) 2023 by W. T. Block, All Rights Reserved
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -35,6 +35,16 @@ public:
 	// number of Items
 	__declspec( property( get=GetCount ))
 		long Count;
+
+	// is the collection empty
+	inline bool GetEmpty()
+	{ 
+		const bool value = m_arrItems.empty();
+		return value; 
+	}
+	// is the collection empty
+	__declspec( property( get = GetEmpty ))
+		bool Empty;
 
 
 // methods

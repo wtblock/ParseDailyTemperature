@@ -5,6 +5,7 @@
 #pragma once
 #include "ClimateStation.h"
 #include "State.h"
+#include "TemperatureMonth.h"
 #include "CHelper.h"
 #include "KeyedCollection.h"
 #include "resource.h"
@@ -17,6 +18,12 @@ CKeyedCollection<CString, CState> m_States;
 
 // cross reference of state codes to postal names
 CKeyedCollection<CString, CString> m_StateCodes;
+
+// collection of minimum temperatures
+CKeyedCollection<CString, CTemperatureMonth> m_Minimums;
+
+// collection of maximum temperatures
+CKeyedCollection<CString, CTemperatureMonth> m_Maximums;
 
 // path to the stations file
 CString m_csStationPath;
