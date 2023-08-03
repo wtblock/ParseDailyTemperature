@@ -16,53 +16,123 @@ CWinApp theApp;
 using namespace std;
 
 /////////////////////////////////////////////////////////////////////////////
+// write the given station temperatures at the given path
+bool WriteStation
+(
+	CString csPath, CString csStation,
+	CSmartArray<CTemperatureMonth>& Months
+)
+{
+	const CString csData = csPath + _T( "_" ) + csStation + _T( ".CSV" );
+
+	CStdioFile fileWrite;
+	const bool value =
+		FALSE != fileWrite.Open
+		(
+			csData, CFile::modeWrite | CFile::modeCreate | CFile::shareDenyNone
+		);
+
+	bool bFirst = true;
+	if ( value == true )
+	{
+		for ( auto& node : Months.Items )
+		{
+			// the first line of the CSV file is the header
+			if ( bFirst )
+			{
+				const CString csHeader = node->Header;
+
+				fileWrite.WriteString( csHeader );
+				bFirst = false;
+			}
+
+			// generate a line of CSV
+			const CString csOut = node->Output;
+
+			// write the line to the output file
+			fileWrite.WriteString( csOut );
+		}
+
+		fileWrite.Close();
+	}
+
+	return value;
+} // WriteStation
+
+/////////////////////////////////////////////////////////////////////////////
 // read the stations text file and index it by the station 6 digit station 
 // code
-bool ReadTemperatures()
+bool ReadTemperatures( CStdioFile& fErr, CString csPath )
 {
+	const CString csFolder = CHelper::GetFolder( csPath );
+	const CString csFile = CHelper::GetFileName( csPath );
+	const CString csExt = CHelper::GetExtension( csPath );
+
+	bool value = false;
+
 	// open the temperature text file
-	CStdioFile file;
-	const bool value =
-		FALSE != file.Open
+	CStdioFile fileRead;
+	const bool bRead =
+		FALSE != fileRead.Open
 		(
-			m_csPath, CFile::modeRead | CFile::shareDenyNone
+			csPath, CFile::modeRead | CFile::shareDenyNone
 		);
 
 	// if the open was successful, read each line of the file and 
 	// collect the temperature data properties
-	if ( value == true )
+	if ( bRead == true )
 	{
-		bool bMinimum = false;
+		// collection of station temperatures
+		CSmartArray<CTemperatureMonth> Months;
+		CString csStation;
 		CString csLine;
-		while ( file.ReadString( csLine ) )
+		bool bFirst = true;
+		while ( fileRead.ReadString( csLine ) )
 		{
-			const CString csElement = csLine.Mid( 12, 4 );
-			if ( csElement == _T( "TMIN" ) )
-			{
-				bMinimum = true;
-			}
-			else if ( csElement == _T( "TMAX" ) )
-			{
-				bMinimum = false;
-			}
-			else
-			{
-				continue;
-			}
-
-			CKeyedCollection<CString, CTemperatureMonth>& target =
-				bMinimum ? m_Minimums : m_Maximums;
-
+			// create a monthly temperature
 			shared_ptr<CTemperatureMonth> pTemp =
 				shared_ptr<CTemperatureMonth>
-				( 
-					new CTemperatureMonth( csLine ) 
+				(
+					new CTemperatureMonth( csLine )
 				);
-			const CString csKey = pTemp->Key;
-			target.add( csKey, pTemp );
+			if ( csStation.IsEmpty() )
+			{
+				csStation = pTemp->Station;
+			}
+			else if ( csStation != pTemp->Station )
+			{
+				CString csState = _T( "Unknown" );
+				shared_ptr<CString> pState = m_StateCodes.find( csStation.Left( 2 ) );
+				if ( pState != NULL )
+				{
+					csState = *pState;
+				}
+				CString csLocation = _T( "Unknown" );
+				shared_ptr<CClimateStation> pStation = m_Stations.find( csStation );
+				if ( pStation != NULL )
+				{
+					csLocation = pStation->Location;
+				}
+				CString csMessage;
+				csMessage.Format
+				( 
+					_T( "Element: %s, State: %s, Location: %s\n" ), 
+					csFile, csState, csLocation
+				);
+				fErr.WriteString( csMessage );
+
+				WriteStation( csFolder + csFile, csStation, Months );
+				Months.clear();
+				csStation = pTemp->Station;
+			}
+			Months.append( pTemp );
+		}
+		if ( !Months.Empty )
+		{
+			WriteStation( csFolder + csFile, csStation, Months );
+			Months.clear();
 		}
 	}
-
 	return value;
 } // ReadTemperatures
 
@@ -186,6 +256,47 @@ bool ReadStates()
 } // ReadStates
 
 /////////////////////////////////////////////////////////////////////////////
+// crawl through the directory tree looking for supported image extensions
+void RecursePath( CStdioFile& fErr, LPCTSTR path )
+{
+	USES_CONVERSION;
+
+	// start trolling for files we are interested in
+	CFileFind finder;
+	BOOL bWorking = finder.FindFile( path );
+	while ( bWorking )
+	{
+		bWorking = finder.FindNextFile();
+
+		// skip "." and ".." folder names
+		if ( finder.IsDots() )
+		{
+			continue;
+		}
+
+		// if it's a directory, recursively search it
+		if ( finder.IsDirectory() )
+		{
+			const CString str = finder.GetFilePath() + _T( "\\*.*" );
+
+			RecursePath( fErr, str );
+		}
+		else // process if it is a valid filename
+		{
+			const CString csPath = finder.GetFilePath().MakeUpper();
+			const CString csData = CHelper::GetDataName( csPath );
+			if ( csData == _T( "TMAX.TXT" ) || csData == _T( "TMIN.TXT" ) )
+			{
+				ReadTemperatures( fErr, csPath );
+			}
+		}
+	}
+
+	finder.Close();
+
+} // RecursePath
+
+/////////////////////////////////////////////////////////////////////////////
 // a console application that can crawl through the file
 // system and troll for climate data
 int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
@@ -208,7 +319,6 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 	vector<CString> arrArgs = CHelper::CorrectedCommandLine( argc, argv );
 	size_t nArgs = arrArgs.size();
 
-	CStdioFile fOut( stdout );
 	CStdioFile fErr( stderr );
 	CString csMessage;
 
@@ -259,7 +369,7 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 			_T( ".\n" )
 			_T( "Usage:\n" )
 			_T( ".\n" )
-			_T( ".  ParseDailyTemperature filename [station_file_name]\n" )
+			_T( ".  ParseDailyTemperature pathname [station_file_name]\n" )
 			_T( ".\n" )
 			_T( "Where:\n" )
 			_T( ".\n" )
@@ -267,10 +377,10 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 
 		fErr.WriteString
 		(
-			_T( ".  filename is the data file to be scanned \n" )
-			_T( ".  and can be a state file or the U. S. file:\n" )
-			_T( ".    \"us.txt\"\n" )
-			_T( ".  station_file_name is the optional station file name: \n" )
+			_T( ".  pathname is the folder to be scanned that contains\n" )
+			_T( ".    all of the state folders that contain TMAX.TXT \n" )
+			_T( ".    and/or TMIN.TXT. \n" )
+			_T( ".  station_file_name is the optional station filename: \n" )
 			_T( ".    defaults to: \"stations.txt\"\n" )
 			_T( ".\n" )
 		);
@@ -287,13 +397,20 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 	// retrieve the pathname from the command line
 	m_csPath = arrArgs[ 1 ];
 
-	// existence of input file
-	bool bExists = false;
+	// trim off any wild card data
+	const CString csFolder = CHelper::GetFolder( m_csPath );
 
-	// if it is not a period, test for existence of the given folder name
-	if ( ::PathFileExists( m_csPath ) )
+	// test for current folder character (a period)
+	bool bExists = m_csPath == _T( "." );
+
+	// if it is a period, add a wild card of *.* to retrieve
+	// all folders and files
+	if ( !bExists )
 	{
-		bExists = true;
+		if ( ::PathFileExists( csFolder ) )
+		{
+			bExists = true;
+		}
 	}
 
 	if ( !bExists )
@@ -345,7 +462,14 @@ int _tmain( int argc, TCHAR* argv[], TCHAR* envp[] )
 	{
 		ReadStates();
 		ReadStations();
-		ReadTemperatures();
+		const CString csRight = m_csPath.Right( 1 );
+		if ( csRight != _T( "\\" ) )
+		{
+			m_csPath += _T( "\\" );
+		}
+		m_csPath += _T( "*.*" );
+
+		RecursePath( fErr, m_csPath );
 	}
 
 	// all is good

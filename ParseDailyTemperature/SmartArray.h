@@ -8,6 +8,7 @@
 
 using namespace std;
 
+/////////////////////////////////////////////////////////////////////////////
 // template class to manage arrays of pointers to any class
 template<class TYPE> class CSmartArray
 {

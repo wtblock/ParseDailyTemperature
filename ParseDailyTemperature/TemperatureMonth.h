@@ -135,7 +135,7 @@ protected:
 	CString m_csSource;
 
 	// station ID
-	CString m_csStateID;
+	CString m_csStation;
 
 	// four character year
 	CString m_csYear;
@@ -148,6 +148,12 @@ protected:
 
 	// key to the temperature data
 	CString m_csKey;
+
+	// comma separated output string
+	CString m_csOutput;
+
+	// comma separated header string
+	CString m_csHeader;
 
 	// a collection of temperatures for the month
 	CSmartArray<CTemperature> m_Temperatures;
@@ -169,7 +175,7 @@ public:
 		m_csSource = value;
 
 		// parse all of the properties
-		const CString csStateID = StateID;
+		const CString csStation = Station;
 		const CString csYear = Year;
 		const CString csMonth = Month;
 		const CString csElement = Element;
@@ -180,25 +186,25 @@ public:
 		CString Source;
 
 	// station ID
-	inline CString GetStateID()
+	inline CString GetStation()
 	{
-		CString value = m_csStateID;
+		CString value = m_csStation;
 
 		if ( ParseValue( value, 0, 6 ) )
 		{
-			StateID = value;
+			Station = value;
 		}
 
 		return value;
 	}
 	// station ID
-	inline void SetStateID( CString value )
+	inline void SetStation( CString value )
 	{
-		m_csStateID = value;
+		m_csStation = value;
 	}
 	// station ID
-	__declspec( property( get = GetStateID, put = SetStateID ) )
-		CString StateID;
+	__declspec( property( get = GetStation, put = SetStation ) )
+		CString Station;
 
 	// four character year
 	inline CString GetYear()
@@ -317,6 +323,68 @@ public:
 	// a collection of temperatures for a month
 	__declspec( property( get = GetTemperatures ) )
 		CSmartArray<CTemperature>& Temperatures;
+
+	// comma separated output string
+	inline CString GetOutput()
+	{
+		CString value = m_csOutput;
+
+		if ( value.IsEmpty() )
+		{
+			const int nMonth = atoi( Month );
+			const int nYear = atoi( Year );
+			int nDay = 1;
+			for ( auto& node : Temperatures.Items )
+			{
+				const int nDegF = node->Degrees;
+				if ( nDegF != -9999 )
+				{
+					CString csTemp;
+					csTemp.Format
+					(
+						_T( "%04d%02d%02d,%d,%s,%s,%s\n" ),
+						nYear, nMonth, nDay,
+						nDegF, node->MFlag, node->QFlag, node->SFlag
+					);
+					value += csTemp;
+				}
+				nDay++;
+			}
+			Output = value;
+		}
+
+		return value;
+	}
+	// comma separated output string
+	inline void SetOutput( CString& value )
+	{
+		m_csOutput = value;
+	}
+	// comma separated output string
+	__declspec( property( get = GetOutput, put = SetOutput ) )
+		CString Output;
+
+	// comma separated header string
+	inline CString GetHeader()
+	{
+		CString value = m_csHeader;
+
+		if ( value.IsEmpty() )
+		{
+			value = _T( "Date,DegF,MF,QF,SF\n" );
+			Header = value;
+		}
+
+		return value;
+	}
+	// comma separated header string
+	inline void SetHeader( CString& value )
+	{
+		m_csHeader = value;
+	}
+	// comma separated header string
+	__declspec( property( get = GetHeader, put = SetHeader ) )
+		CString Header;
 
 // protected methods
 protected:

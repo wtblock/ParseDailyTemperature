@@ -8,6 +8,7 @@
 #include "TemperatureMonth.h"
 #include "CHelper.h"
 #include "KeyedCollection.h"
+#include "SmartArray.h"
 #include "resource.h"
 
 // collection of stations keyed by station ID
@@ -19,16 +20,12 @@ CKeyedCollection<CString, CState> m_States;
 // cross reference of state codes to postal names
 CKeyedCollection<CString, CString> m_StateCodes;
 
-// collection of minimum temperatures
-CKeyedCollection<CString, CTemperatureMonth> m_Minimums;
-
-// collection of maximum temperatures
-CKeyedCollection<CString, CTemperatureMonth> m_Maximums;
-
 // path to the stations file
 CString m_csStationPath;
 
 // path to the data file
 CString m_csPath;
 
+// filename to process (TMAX or TMIN)
+CString m_csFilename;
 

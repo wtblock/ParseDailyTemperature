@@ -171,6 +171,11 @@
   <ItemGroup>
     <ResourceCompile Include="ParseDailyTemperature.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="CreateStates.bat" />
+    <None Include="FilterTMAX.bat" />
+    <None Include="FilterTMIN.bat" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
