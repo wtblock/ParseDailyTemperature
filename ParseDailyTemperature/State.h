@@ -4,6 +4,8 @@
 #pragma once
 #include "KeyedCollection.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// class to cross reference state ID codes with postal 2 letter abbreviation
 class CState
 {
 // protected data

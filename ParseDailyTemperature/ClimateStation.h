@@ -20,6 +20,7 @@
 // COMPONENT 3 ( COOP ID ) 82 - 87     Char
 // UTC OFFSET              89 - 90     Int
 
+/////////////////////////////////////////////////////////////////////////////
 // a class representing a single climate station
 class CClimateStation
 {

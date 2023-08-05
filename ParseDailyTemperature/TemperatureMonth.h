@@ -26,6 +26,7 @@
 // QFLAG31	263		Character
 // SFLAG31	264		Character
 
+/////////////////////////////////////////////////////////////////////////////
 // a class to contain a month of temperature data
 class CTemperatureMonth
 {
